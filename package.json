@@ -1,0 +1,23 @@
+{
+  "name": "fragments-ui",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Fragments UI testing web app",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "parcel src/index.html",
+    "build": "parcel build src/index.html"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/REPLACE_WITH_YOUR_GITHUB_USERNAME/fragments-ui.git"
+  },
+  "author": "REPLACE_WITH_YOUR_NAME",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "parcel": "^2.15.4"
+  },
+  "dependencies": {
+    "oidc-client-ts": "^3.3.0"
+  }
+}
