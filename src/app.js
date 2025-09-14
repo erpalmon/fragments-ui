@@ -1,4 +1,5 @@
 import { signIn, getUser, signOut } from './auth';
+import { getUserFragments } from './api';
 
 async function init() {
   // Get our UI elements
@@ -42,6 +43,14 @@ async function init() {
   loginBtn.hidden = true;
 
   logoutBtn.hidden = false;
+
+
+
+  
+  // Call backend and log result
+  const userFragments = await getUserFragments(user);
+  console.log("User's fragments:", userFragments);
+  
 }
 
 
