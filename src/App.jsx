@@ -1,18 +1,17 @@
-// app.jsx
-// modified due to react framework and the use of Vite
-
 import { useEffect, useState } from 'react';
 import { signIn, signOut, getUser } from './auth';
+import { getUserFragments } from './api';
 
 function App() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
     async function init() {
-        // Get our UI elements
       const currentUser = await getUser();
       if (!currentUser) return;
       setUser(currentUser);
+      // Optional API call after login:
+      // await getUserFragments(currentUser);
     }
     init();
   }, []);
@@ -31,4 +30,4 @@ function App() {
   );
 }
 
-export default App;
+export default App;  // <-- make sure this line exists
