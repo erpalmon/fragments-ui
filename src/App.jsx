@@ -10,8 +10,11 @@ function App() {
       const currentUser = await getUser();
       if (!currentUser) return;
       setUser(currentUser);
-      // Optional API call after login:
-      // await getUserFragments(currentUser);
+
+      // Do an authenticated request to the fragments API server and log the result
+      const userFragments = await getUserFragments(currentUser);
+      // Optional: also log here if you want to see it in App.jsx
+      // console.log('Fragments in App.jsx', userFragments);
     }
     init();
   }, []);
@@ -30,4 +33,4 @@ function App() {
   );
 }
 
-export default App;  // <-- make sure this line exists
+export default App;
