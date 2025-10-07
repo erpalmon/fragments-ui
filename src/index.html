@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -8,14 +9,34 @@
   </head>
   <body>
     <h1>Fragments UI</h1>
+
     <section>
       <nav>
         <button id="login">Login</button>
         <button id="logout" hidden>Logout</button>
       </nav>
     </section>
+
     <section hidden id="user">
       <h2>Hello <span class="username"></span>!</h2>
+    </section>
+
+    <section>
+      <h2>API Status Test</h2>
+      <button id="check-api">Check API</button>
+      <pre id="output"></pre>
+    </section>
+
+    
+    <section>
+      <h2>Create a Text Fragment</h2>
+      <textarea id="fragment-text" rows="4" placeholder="Write something..."></textarea>
+      <button id="create-fragment">Create Fragment</button>
+
+      <h3>API Response</h3>
+      <p>Status: <span id="api-status">–</span></p>
+      <p>Location: <span id="api-location">–</span></p>
+      <pre id="fragment-result"></pre>
     </section>
   </body>
 </html>

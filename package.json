@@ -15,7 +15,9 @@
   "author": "REPLACE_WITH_YOUR_NAME",
   "license": "UNLICENSED",
   "devDependencies": {
-    "parcel": "^2.15.4"
+    "eslint": "^9.36.0",
+    "parcel": "^2.15.4",
+    "prettier": "^3.6.2"
   },
   "dependencies": {
     "oidc-client-ts": "^3.3.0"

@@ -9,9 +9,9 @@ const cognitoAuthConfig = {
   post_logout_redirect_uri: process.env.OAUTH_SIGN_OUT_REDIRECT_URL,
   response_type: 'code',
   scope: 'phone openid email',
-  // no revoke of "access token" (https://github.com/authts/oidc-client-ts/issues/262)
+
   revokeTokenTypes: ['refresh_token'],
-  // no silent renew via "prompt=none" (https://github.com/authts/oidc-client-ts/issues/366)
+
   automaticSilentRenew: false,
 };
 
