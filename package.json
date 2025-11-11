@@ -4,22 +4,24 @@
   "version": "0.0.1",
   "description": "Fragments UI testing web app",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "parcel src/index.html",
-    "build": "parcel build src/index.html"
+    "start": "parcel src/index.html --port 1234",
+    "dev": "npm run start",
+    "build": "parcel build src/index.html --dist-dir dist",
+    "clean": "rm -rf dist .parcel-cache"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/REPLACE_WITH_YOUR_GITHUB_USERNAME/fragments-ui.git"
+    "url": "git+https://github.com/erpalmon/fragments-ui.git"
   },
-  "author": "REPLACE_WITH_YOUR_NAME",
+  "author": "ELLA PALMON",
   "license": "UNLICENSED",
   "devDependencies": {
     "eslint": "^9.36.0",
-    "parcel": "^2.15.4",
+    "parcel": "^2.16.1",
     "prettier": "^3.6.2"
   },
   "dependencies": {
     "oidc-client-ts": "^3.3.0"
   }
 }
+

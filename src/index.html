@@ -1,42 +1,43 @@
+<h1>Fragments – Manual Test UI</h1>
 
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Fragments UI</title>
-    <link rel="stylesheet" href="https://unpkg.com/bamboo.css" />
-    <script type="module" src="./app.js"></script>
-  </head>
-  <body>
-    <h1>Fragments UI</h1>
+<!-- New: auth controls (wired in app.js) -->
+<div style="margin:8px 0;">
+  <button id="btnSignIn">Sign in</button>
+  <button id="btnSignOut">Sign out</button>
+  <span id="authStatus" style="margin-left:8px; font-size:12px; color:#555;"></span>
+</div>
 
-    <section>
-      <nav>
-        <button id="login">Login</button>
-        <button id="logout" hidden>Logout</button>
-      </nav>
-    </section>
+<div style="display:flex; gap:12px; align-items:flex-start; margin-bottom:12px;">
+  <div style="flex:1;">
+    <label>API Base URL</label>
+    <input id="apiBase" type="text" placeholder="http://localhost:8080" style="width:100%; padding:8px;" />
+    <div class="small">Use your EC2 URL when testing remotely.</div>
+  </div>
+  <div style="flex:1;">
+    <label>Access Token (Bearer)</label>
+    <input id="token" type="text" placeholder="eyJ..." style="width:100%; padding:8px;" />
+    <div class="small">Paste Cognito access token, or leave blank if your auth.js auto-injects.</div>
+  </div>
+</div>
 
-    <section hidden id="user">
-      <h2>Hello <span class="username"></span>!</h2>
-    </section>
+<label>Fragment Type</label>
+<select id="fragType" style="width:100%; padding:8px; margin-bottom:8px;">
+  <option value="text/plain">text/plain</option>
+  <option value="text/markdown">text/markdown</option>
+  <option value="application/json">application/json</option>
+</select>
 
-    <section>
-      <h2>API Status Test</h2>
-      <button id="check-api">Check API</button>
-      <pre id="output"></pre>
-    </section>
+<label>Content</label>
+<textarea id="content" rows="8" placeholder="Write text, markdown, or JSON here..." style="width:100%; padding:8px;"></textarea>
 
-    
-    <section>
-      <h2>Create a Text Fragment</h2>
-      <textarea id="fragment-text" rows="4" placeholder="Write something..."></textarea>
-      <button id="create-fragment">Create Fragment</button>
+<div style="margin-top:12px;">
+  <button id="btnCreate" style="padding:8px 12px;">Create Fragment (POST /v1/fragments)</button>
+  <button id="btnList" style="padding:8px 12px;">List Fragments (GET /v1/fragments?expand=1)</button>
+</div>
 
-      <h3>API Response</h3>
-      <p>Status: <span id="api-status">–</span></p>
-      <p>Location: <span id="api-location">–</span></p>
-      <pre id="fragment-result"></pre>
-    </section>
-  </body>
-</html>
+<h2>Result</h2>
+<div id="result"></div>
+
+<!-- keep this at the end of <body> -->
+<script type="module" src="./app.js"></script>
+

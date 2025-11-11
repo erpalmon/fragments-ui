@@ -1,100 +1,177 @@
-import { signIn, getUser, signOut } from './auth';
-import { getUserFragments } from './api';
+// ===================== COGNITO CONFIG =====================
+const COG_DOMAIN = 'us-east-17yb7gxpks.auth.us-east-1.amazoncognito.com';
+const COG_CLIENTID = '315h8v1g0t6vmlf4lbg2cd5bjn';
 
-const API_URL = process.env.API_URL || "http://localhost:8080";
+const COG_SCOPES = ['openid', 'email', 'profile'];
+// Must exactly match the Callback/Sign-out URLs in your App Client
+const REDIRECT_URI = 'http://localhost:1234';
+// ==========================================================
 
-async function init() {
-  // Get our UI elements
-  const userSection = document.querySelector('#user');
-  const loginBtn = document.querySelector('#login');
-  const logoutBtn = document.querySelector('#logout');
-  // const createSection = document.querySelector('#create-fragment-section');
+// --- Token storage helpers (session-scoped) ---
+const TOKEN_KEY = 'cognito_access_token';
+const setToken = (t) => sessionStorage.setItem(TOKEN_KEY, t);
+const getToken = () => sessionStorage.getItem(TOKEN_KEY) || '';
+const clearToken = () => sessionStorage.removeItem(TOKEN_KEY);
 
-  // Login
-  loginBtn.onclick = () => signIn();
+// --- Hosted UI URLs ---
+function buildAuthorizeUrl() {
+  const params = new URLSearchParams({
+    client_id: COG_CLIENTID,
+    // Request BOTH so we can prefer id_token for the API
+    response_type: 'id_token token',
+    scope: COG_SCOPES.join(' '),
+    redirect_uri: REDIRECT_URI,
+  });
+  // NEW: use canonical authorize endpoint
+  return `https://${COG_DOMAIN}/oauth2/authorize?${params.toString()}`;
+}
 
-  // Logout
-  logoutBtn.onclick = async () => {
-    userSection.hidden = true;
-    loginBtn.hidden = false;
-    logoutBtn.hidden = true;
-    createSection.hidden = false;
-    await signOut();
+function buildLogoutUrl() {
+  const params = new URLSearchParams({
+    client_id: COG_CLIENTID,
+    logout_uri: REDIRECT_URI, // must be in Allowed sign-out URLs
+  });
+  return `https://${COG_DOMAIN}/logout?${params.toString()}`;
+}
+
+// --- Capture token(s) on the redirect back from Cognito ---
+function captureTokenFromHash() {
+  const hash = window.location.hash?.replace(/^#/, '');
+  if (!hash) return null;
+
+  const params = new URLSearchParams(hash);
+  // Prefer id_token for the API (your server verifies ID tokens)
+  const idt = params.get('id_token');
+  const act = params.get('access_token');
+  const token = idt || act;
+
+  if (token) {
+    setToken(token);
+    // Clean the fragment from the address bar
+    history.replaceState(null, '', REDIRECT_URI);
+  }
+  return token ? (idt ? 'id_token' : 'access_token') : null;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const $ = (id) => document.getElementById(id);
+  const resEl = $('result');
+
+  // 1) Handle redirect-from-login, wire auth buttons
+  const capturedType = captureTokenFromHash();
+
+  const btnIn = $('btnSignIn');
+  const btnOut = $('btnSignOut');
+  const status = $('authStatus');
+  const tokenInput = $('token');
+
+  // reflect saved token into the textbox
+  const saved = getToken();
+  if (saved && tokenInput) tokenInput.value = saved; // NEW: mirror captured/saved token into the input
+
+  function updateStatus(extra = '') {
+    const base = getToken() ? 'Signed in' : 'Signed out';
+    status && (status.textContent = extra ? `${base} (${extra})` : base);
+  }
+  updateStatus(capturedType || '');
+
+  btnIn && btnIn.addEventListener('click', () => {
+    window.location.href = buildAuthorizeUrl();
+  });
+
+  btnOut && btnOut.addEventListener('click', () => {
+    clearToken();
+    if (tokenInput) tokenInput.value = '';
+    updateStatus();
+    window.location.href = buildLogoutUrl(); // clear Cognito session, bounce back here
+  });
+
+  // 2) Existing tester UI wiring (Create/List)
+  const btnCreate = $('btnCreate');
+  const btnList = $('btnList');
+
+  // If some external auth.js exists, prefer its token (no-op otherwise)
+  try {
+    if (typeof window.getAccessToken === 'function') {
+      const t = window.getAccessToken();
+      if (t) {
+        setToken(t);
+        if (tokenInput) tokenInput.value = t;
+        updateStatus();
+      }
+    }
+  } catch (_) {}
+
+  const writeResult = (title, data, extras = {}) => {
+    const pre = document.createElement('pre');
+    const header = document.createElement('div');
+    header.innerHTML = `<strong>${title}</strong>`;
+    const block = { ...extras, ...(typeof data === 'string' ? { text: data } : data) };
+    pre.textContent = JSON.stringify(block, null, 2);
+    resEl.replaceChildren(header, pre);
   };
 
-  // Check if signed in
-  const user = await getUser();
-  if (!user) return;
+  const getConfig = () => {
+    const apiBase = ($('apiBase')?.value || '').trim() || 'http://localhost:8080';
+    const tokenFromBox = (tokenInput?.value || '').trim();
+    const token = tokenFromBox || getToken();
+    if (!token) throw new Error('Missing token. Paste your ID token or click Sign in.');
+    return { apiBase, token };
+  };
 
-  // Update UI
-  userSection.hidden = false;
-  userSection.querySelector('.username').innerText = user.username;
-  loginBtn.hidden = true;
-  logoutBtn.hidden = false;
-  // createSection.hidden = false;
-
-  // Log fragments in console
-  const userFragments = await getUserFragments(user);
-  console.log("User's fragments:", userFragments);
-
-
-  const createBtn = document.getElementById('create-fragment');
-  console.log('createBtn:', createBtn);
-  const fragmentText = document.getElementById('fragment-text');
-  const fragmentResult = document.getElementById('fragment-result');
-
-  createBtn.onclick = async () => {
-    console.log("button is clicked")
-    const text = fragmentText.value.trim();
-    if (!text) {
-      console.log("No text entered");
-      fragmentResult.textContent = "Please enter some text!";
-      return;
-    }
-
+  btnCreate && btnCreate.addEventListener('click', async () => {
     try {
-      console.log("in try block");
-      console.log(user)
-      const res = await fetch(`${API_URL}/v1/fragments`, {
+      const { apiBase, token } = getConfig();
+      const type = $('fragType').value;
+      let body = $('content').value || '';
+
+      if (type === 'application/json') {
+        try {
+          JSON.parse(body || '');
+        } catch {
+          writeResult('Error', { error: 'Invalid JSON. Fix the JSON and try again.' });
+          return;
+        }
+      }
+
+      const res = await fetch(`${apiBase}/v1/fragments`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${user.idToken}`,
-          'Content-Type': 'text/plain',
+          Authorization: `Bearer ${token}`,
+          'Content-Type': type,
         },
-        body: text,
+        body,
       });
-      console.log("after fetch block", res)
 
-      const data = await res.json();
-      fragmentResult.textContent = `Fragment created:\n${JSON.stringify(data, null, 2)}`;
-      console.log("in try block", data);
-    } catch (err) {
-      fragmentResult.textContent = `Error creating fragment: ${err.message}`;
-      console.log("in catch block", err);
-    }
-  };
-}
-
-
-function setupApiCheck() {
-  const checkBtn = document.getElementById('check-api');
-  if (checkBtn) {
-    checkBtn.onclick = async () => {
+      const location = res.headers.get('Location') || res.headers.get('location');
+      const text = await res.text();
+      let json;
       try {
-        const res = await fetch(API_URL);
-        if (!res.ok) throw new Error(`API error: ${res.status}`);
-        const data = await res.json();
-        document.getElementById('output').textContent = JSON.stringify(data, null, 2);
-      } catch (err) {
-        document.getElementById('output').textContent = `Error: ${err.message}`;
+        json = JSON.parse(text);
+      } catch {
+        json = { raw: text };
       }
-    };
-  }
-}
 
-addEventListener('DOMContentLoaded', () => {
-  init();
-  setupApiCheck();
+      writeResult(`POST /v1/fragments → ${res.status}`, json, { Location: location });
+    } catch (err) {
+      writeResult('Error', { message: err.message || String(err) });
+    }
+  });
+
+  btnList && btnList.addEventListener('click', async () => {
+    try {
+      const { apiBase, token } = getConfig();
+      const res = await fetch(`${apiBase}/v1/fragments?expand=1`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json().catch(() => ({}));
+      writeResult(`GET /v1/fragments?expand=1 → ${res.status}`, json);
+    } catch (err) {
+      writeResult('Error', { message: err.message || String(err) });
+    }
+  });
+
+  // Convenience: prefill API from ?api= query param
+  const params = new URLSearchParams(location.search);
+  if (params.get('api') && $('apiBase')) $('apiBase').value = params.get('api');
 });
-
-init()
